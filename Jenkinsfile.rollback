@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Switch Traffic to Stable (Green)') {
+            steps {
+                script {
+                    echo "Drift detected! Switching traffic from Blue to Green..."
+                    sh """
+                        kubectl patch service sentiment-api-service \
+                            -p '{"spec":{"selector":{"slot":"green"}}}'
+                    """
+                    echo "Traffic switched to Green (stable) successfully."
+                    sh "kubectl get service sentiment-api-service -o yaml | grep slot"
+                }
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo "Rollback to stable (green) completed. Self-healing successful!"
+        }
+        failure {
+            echo "Rollback FAILED. Manual intervention required!"
+        }
+    }
+}

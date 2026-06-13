@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentiment-blue-deployment
+  labels:
+    app: sentiment-api
+    slot: blue
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sentiment-api
+      slot: blue
+  template:
+    metadata:
+      labels:
+        app: sentiment-api
+        slot: blue
+    spec:
+      containers:
+        - name: sentiment-api
+          image: urva123ishfaq/sentiment-api:unstable
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: logs-volume
+              mountPath: /app/logs
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 60
+            periodSeconds: 5
+      volumes:
+        - name: logs-volume
+          persistentVolumeClaim:
+            claimName: sentiment-logs-pvc
